@@ -1,0 +1,39 @@
+#!/usr/bin/env ruby
+
+# Debian pkg dependencies:
+# - pngcrush
+# - libjpeg-progs
+# - imagemagick
+
+# Usage: optimize-images graphic1.png photo1.jpeg bash-glob-exp1
+
+require "fileutils"
+
+ARGV.each do |pattern|
+  Dir[File.expand_path(pattern)].each do |path|
+    dirname = File.dirname(path)
+    dest = File.join(dirname, "_#{File.basename(path)}")
+
+    type = `file #{path}`[/: ([^,]+)/, 1]
+    success = case type
+              when /JPEG/
+                system("jpegtran -copy none -optimize -outfile #{dest} #{path}")
+              when /PNG/
+                system("pngcrush -rem alla -reduce -q #{path} #{dest}")
+              when /GIF/
+                # only convert non-animated GIFs to PNG8
+                if `identify -format %m #{path}` == "GIF"
+                  basename = File.basename(path, File.extname(path))
+                  dest = File.join(dirname, "#{basename}.png")
+
+                  if system("convert #{path} #{dest}")
+                    src = dest
+                    dest = File.join(dirname, "_#{File.basename(src)}")
+                    system("pngcrush -rem alla -reduce #{src} #{dest}")
+                  end
+                end
+              end
+
+    FileUtils.mv(dest, path) if success
+  end
+end

@@ -1,0 +1,10 @@
+#!/bin/bash
+
+for filename in "$@"
+do
+  ext=".${filename##*.}"
+  fname=$(basename "$filename" "$ext")
+  tr_fname=$(echo "$fname" | tr -s [:blank:] _ | tr -sC [:alnum:] _ | tr -s [:upper:] [:lower:] | sed -e 's/_$//')
+  dname=$(dirname "$filename")
+  cp $filename "$dname/$tr_fname$ext"
+done

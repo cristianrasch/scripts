@@ -1,0 +1,11 @@
+#!/bin/bash
+
+for filename in "$@"
+do
+  ext=".${filename##*.}"
+  fname=$(basename "$filename" "$ext")_web
+  dname=$(dirname "$filename")
+  dest_path="$dname/$fname.jpg"
+  convert -auto-orient -quality 80 -thumbnail '1360x768>' -sharpen '0x1.0' $filename $dest_path
+  # convert -auto-orient -quality 85 $filename $dest_path
+done
