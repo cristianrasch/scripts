@@ -1,0 +1,12 @@
+#!/bin/bash
+
+LABEL="$1"
+
+SERVER="$2"
+if [ -z "$SERVER" ]
+  then
+    SERVER="hrw-web"
+fi
+
+PUBLIC_IP=$(dig +short myip.opendns.com @resolver1.opendns.com)
+ssh "$SERVER" "~/bin/whitelist-ip-4-squid-srv $LABEL $PUBLIC_IP"
