@@ -33,11 +33,7 @@ def convert(img_path):
 
 pic_path = Path(sys.argv[1] if len(sys.argv) > 1 else '~/Pictures').expanduser()
 jobs = []
-
 converted = 0
-def job_done_cb(_):
-    global converted
-    converted += 1
 
 with futures.ProcessPoolExecutor() as executor:
     for dirpath, _, filenames in os.walk(pic_path):
@@ -46,7 +42,10 @@ with futures.ProcessPoolExecutor() as executor:
                 if Path(filename).stem.endswith(OPT_SUFFIX): continue
 
                 job = executor.submit(convert, Path(dirpath) / filename)
-                job.add_done_callback(job_done_cb)
                 jobs.append(job)
+
+    for job in futures.as_completed(jobs):
+        if job.done():
+            converted += 1
 
 print(converted, 'images converted.')
