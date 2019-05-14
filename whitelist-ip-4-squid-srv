@@ -3,7 +3,7 @@
 # USAGE: ssh www.jaylen.com.ar "~/bin/whitelist-ip-4-squid-srv ROSALES $(public-ip)"
 
 SQUID_CONFIG=/etc/squid/squid.conf
-PROXY_PORT-3128
+PROXY_PORT=3128
 LABEL="$1"
 NEW_IP="$2"
 
