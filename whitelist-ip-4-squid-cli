@@ -5,7 +5,7 @@ LABEL="$1"
 SERVER="$2"
 if [ -z "$SERVER" ]
   then
-    SERVER="hrw-web"
+    SERVER="se1"
 fi
 
 PUBLIC_IP=$(dig +short myip.opendns.com @resolver1.opendns.com)
