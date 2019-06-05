@@ -8,5 +8,5 @@ if [ -z "$SERVER" ]
     SERVER="se1"
 fi
 
-PUBLIC_IP=$(dig +short myip.opendns.com @resolver1.opendns.com)
+PUBLIC_IP=$(curl -s ifconfig.me)
 ssh "$SERVER" "~/bin/whitelist-ip-4-openvpn-srv $LABEL $PUBLIC_IP"
