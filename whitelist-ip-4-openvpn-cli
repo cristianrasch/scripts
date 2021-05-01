@@ -5,7 +5,7 @@ LABEL="$1"
 SERVER="$2"
 if [ -z "$SERVER" ]
   then
-    SERVER="se1"
+    SERVER="1p21-web"
 fi
 
 PUBLIC_IP=$(curl -s ifconfig.me)

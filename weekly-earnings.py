@@ -27,6 +27,8 @@ parser.add_argument("-e", "--entry", metavar="H1:M1,M2", dest="entries",
                     help="hour1:min1,min2", action="append")
 parser.add_argument("-r", "--rate", type=Decimal,
                     help="Hourly rate (overrides the RATE env var)")
+parser.add_argument("-q", "--discreet", action="store_true",
+                    help="Don't output any monetary amount")
 args = parser.parse_args()
 
 weekly_earnings = Decimal(0)
@@ -58,12 +60,18 @@ for day_entries in args.entries:
   day_earnings = (day_mins * hr_rate) / MINS_IN_HR
   d = dt.strftime(DATE_FORMAT)
   t = format_time(day_mins)
-  amount = format_currency(day_earnings)
-  print(f"[{d}] {t} hours tracked - {amount}")
+  row = f"[{d}] {t} hours tracked"
+  if not args.discreet:
+    amount = format_currency(day_earnings)
+    row += f" - {amount}"
+  print(row)
 
   weekly_earnings += day_earnings
   dt += one_day
 
 total_hours_tracked = format_time(total_time_tracked_in_mins)
-total_earnings = format_currency(weekly_earnings)
-print(f"\n{total_hours_tracked} hours tracked in total - {total_earnings}")
+last_row = f"\n{total_hours_tracked} hours tracked in total"
+if not args.discreet:
+    total_earnings = format_currency(weekly_earnings)
+    last_row += f" - {total_earnings}"
+print(last_row)

@@ -33,6 +33,10 @@ OptionParser.new do |args|
   args.on("-r", "--rate RATE", "Hourly rate (overrides the RATE env var)") do |rate|
     arguments[:rate] = BigDecimal(rate)
   end
+
+  args.on("-q", "--discreet", "Don't output any monetary amount") do |rate|
+    arguments[:discreet] = true
+  end
 end.parse!
 
 weekly_earnings = BigDecimal(0)
@@ -72,13 +76,21 @@ arguments[:entries].each do |day_entries|
   day_earnings = (day_mins * hr_rate) / 60.0
   d = date.strftime(DATE_FORMAT)
   t = format_time(day_mins)
-  amount = format_currency(day_earnings)
-  puts "[#{d}] #{t} hours tracked - #{amount}"
+  row = "[#{d}] #{t} hours tracked"
+  unless arguments[:discreet]
+    amount = format_currency(day_earnings)
+    row << " - #{amount}"
+  end
+  puts row
 
   weekly_earnings += day_earnings
   date += 1
 end
 
 total_hours_tracked = format_time(total_time_tracked_in_mins)
-total_earnings = format_currency(weekly_earnings)
-puts "\n#{total_hours_tracked} hours tracked in total - #{total_earnings}"
+last_row = "\n#{total_hours_tracked} hours tracked in total"
+unless arguments[:discreet]
+  total_earnings = format_currency(weekly_earnings)
+  last_row << " - #{total_earnings}"
+end
+puts last_row

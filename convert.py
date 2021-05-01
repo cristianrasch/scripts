@@ -6,12 +6,13 @@ Usage: convert.py [DIR] (defaults to ~/Pictures)
 """
 
 from concurrent import futures
-import fnmatch
+from fnmatch import fnmatch
 import os
 from pathlib import Path
 import subprocess
 import sys
 
+SUPPORTED_FILE_EXTS = ['*.jp*g', '*.png']
 OPT_SUFFIX = '_opt'
 
 def convert(img_path):
@@ -30,22 +31,28 @@ def convert(img_path):
               (src_path, err.stderr, err.returncode))
     else:
         img_path.unlink()
+        return True
 
-pic_path = Path(sys.argv[1] if len(sys.argv) > 1 else '~/Pictures').expanduser()
+paths = sys.argv[1:] if len(sys.argv) > 1 else ['~/Pictures']
+pics_paths = [Path(path).expanduser() for path in paths]
+if not all(path.exists() for path in pics_paths):
+    sys.exit(f'Usage: {Path(__file__).name} PICS_DIR1 PICS_DIR2 PICS_DIRN')
+
 jobs = []
 converted = 0
 
 with futures.ProcessPoolExecutor() as executor:
-    for dirpath, _, filenames in os.walk(pic_path):
-        for filename in filenames:
-            if fnmatch.fnmatch(filename, '*.jp*g'):
-                if Path(filename).stem.endswith(OPT_SUFFIX): continue
+    for pics_path in pics_paths:
+        for dirpath, _, filenames in os.walk(pics_path):
+            for filename in filenames:
+                if any(fnmatch(filename, ext) for ext in SUPPORTED_FILE_EXTS):
+                    if Path(filename).stem.endswith(OPT_SUFFIX): continue
 
-                job = executor.submit(convert, Path(dirpath) / filename)
-                jobs.append(job)
+                    job = executor.submit(convert, Path(dirpath) / filename)
+                    jobs.append(job)
 
     for job in futures.as_completed(jobs):
-        if job.done():
+        if job.done() and job.result():
             converted += 1
 
-print(converted, 'images converted.')
+print(f'{converted} picture{"" if converted == 1 else "s"}.')
