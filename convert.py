@@ -33,26 +33,40 @@ def convert(img_path):
         img_path.unlink()
         return True
 
-paths = sys.argv[1:] if len(sys.argv) > 1 else ['~/Pictures']
-pics_paths = [Path(path).expanduser() for path in paths]
-if not all(path.exists() for path in pics_paths):
-    sys.exit(f'Usage: {Path(__file__).name} PICS_DIR1 PICS_DIR2 PICS_DIRN')
 
-jobs = []
-converted = 0
+if __name__ == '__main__':
+    try:
+        subprocess.run(['convert', '--version'], stdout=subprocess.DEVNULL,
+                       stderr=subprocess.STDOUT)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        sys.exit(f'The convert cmd provided by ImageMagick is not reachable from your $PATH')
 
-with futures.ProcessPoolExecutor() as executor:
-    for pics_path in pics_paths:
-        for dirpath, _, filenames in os.walk(pics_path):
-            for filename in filenames:
-                if any(fnmatch(filename, ext) for ext in SUPPORTED_FILE_EXTS):
-                    if Path(filename).stem.endswith(OPT_SUFFIX): continue
 
-                    job = executor.submit(convert, Path(dirpath) / filename)
-                    jobs.append(job)
+    paths = sys.argv[1:] if len(sys.argv) > 1 else ['~/Pictures']
+    pics_paths = [Path(path).expanduser() for path in paths]
+    if not all(path.exists() for path in pics_paths):
+        sys.exit(f'Usage: {Path(__file__).name} PICS_DIR1 PICS_DIR2 PICS_DIRN')
 
-    for job in futures.as_completed(jobs):
-        if job.done() and job.result():
-            converted += 1
+    jobs = []
+    converted = 0
 
-print(f'{converted} picture{"" if converted == 1 else "s"}.')
+    running_on_win = sys.platform == 'win32'
+    exec_cls = futures.ThreadPoolExecutor if running_on_win else futures.ProcessPoolExecutor
+    max_workers = None
+    if running_on_win: max_workers = int(os.getenv('MAX_WORKERS', 2))
+
+    with exec_cls(max_workers=max_workers) as executor:
+        for pics_path in pics_paths:
+            for dirpath, _, filenames in os.walk(pics_path):
+                for filename in filenames:
+                    if any(fnmatch(filename, ext) for ext in SUPPORTED_FILE_EXTS):
+                        if Path(filename).stem.endswith(OPT_SUFFIX): continue
+
+                        job = executor.submit(convert, Path(dirpath) / filename)
+                        jobs.append(job)
+
+        for job in futures.as_completed(jobs):
+            if job.done() and job.result():
+                converted += 1
+
+    print(f'{converted} picture{"" if converted == 1 else "s"}.')
